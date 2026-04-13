@@ -16,12 +16,26 @@ interface AuctionProps {
 
 export class Auction extends AggregateRoot<AuctionProps> {
   static create(props: AuctionProps, id?: UniqueEntityId) {
+    const now = new Date()
+
+    const auction = new Auction(
+      {
+        ...props,
+        createdAt: props.createdAt ?? now,
+        updatedAt: props.updatedAt ?? now,
+      },
+      id,
+    )
+
     if (props.endAt <= props.startAt) {
       throw new Error('endAt must be after startAt')
     }
-    if (props.lots.length === 0) {
+    if (
+      auction.props.status.isScheduledOrRunning() &&
+      auction.props.lots.length === 0
+    ) {
       throw new Error('Auction must have at least one lot')
     }
-    return new Auction(props, id)
+    return auction
   }
 }

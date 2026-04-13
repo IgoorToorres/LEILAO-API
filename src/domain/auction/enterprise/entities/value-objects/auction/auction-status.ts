@@ -31,4 +31,8 @@ export class AuctionStatus {
   static canceled() {
     return new AuctionStatus('canceled')
   }
+
+  isScheduledOrRunning(): boolean {
+    return this.value === 'scheduled' || this.value === 'running'
+  }
 }
