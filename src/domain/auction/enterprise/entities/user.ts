@@ -1,7 +1,10 @@
 import { Entity } from '@/core/entities/entity'
-import { BirthDate } from './value-objects/birth-date'
-import { Email } from './value-objects/email'
-import { UserStatus, VerificationStatus } from './value-objects/user-status'
+import { BirthDate } from './value-objects/user/birth-date'
+import { Email } from './value-objects/user/email'
+import {
+  UserStatus,
+  VerificationStatus,
+} from './value-objects/user/user-status'
 import { UniqueEntityId } from '@/core/entities/unique-entity-id'
 
 interface UserProps {
