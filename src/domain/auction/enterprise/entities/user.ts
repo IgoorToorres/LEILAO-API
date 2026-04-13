@@ -51,4 +51,8 @@ export class User extends Entity<UserProps> {
 
     return user
   }
+
+  get status() {
+    return this.props.status.value
+  }
 }
