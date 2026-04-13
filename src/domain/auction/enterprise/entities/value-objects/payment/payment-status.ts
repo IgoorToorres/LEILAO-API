@@ -7,19 +7,19 @@ export class PaymentStatus {
     this.value = value
   }
 
-  get pending() {
+  static pending() {
     return new PaymentStatus('pending')
   }
 
-  get confirmed() {
+  static confirmed() {
     return new PaymentStatus('confirmed')
   }
 
-  get failed() {
+  static failed() {
     return new PaymentStatus('failed')
   }
 
-  get refunded() {
+  static refunded() {
     return new PaymentStatus('refunded')
   }
 }

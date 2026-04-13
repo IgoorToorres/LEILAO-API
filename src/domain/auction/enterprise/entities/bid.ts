@@ -44,4 +44,8 @@ export class Bid extends Entity<BidProps> {
   get lotId(): UniqueEntityId {
     return this.props.lotId
   }
+
+  get userId(): UniqueEntityId {
+    return this.props.userId
+  }
 }

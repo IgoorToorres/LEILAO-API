@@ -1,7 +1,8 @@
 import { UniqueEntityId } from '@/core/entities/unique-entity-id'
 import { Money } from './value-objects/money'
 import { PaymentStatus } from './value-objects/payment/payment-status'
-import { Entity } from '@/core/entities/entity'
+import { AggregateRoot } from '@/core/entities/aggregate-root'
+import { PaymentConfirmed } from '../events/payment-confirmed'
 
 interface PaymentProps {
   auctionId: UniqueEntityId
@@ -12,7 +13,7 @@ interface PaymentProps {
   updatedAt: Date
 }
 
-export class Payment extends Entity<PaymentProps> {
+export class Payment extends AggregateRoot<PaymentProps> {
   static create(
     props: Omit<PaymentProps, 'createdAt' | 'updatedAt'> &
       Partial<Pick<PaymentProps, 'createdAt' | 'updatedAt'>>,
@@ -44,5 +45,16 @@ export class Payment extends Entity<PaymentProps> {
       },
       id,
     )
+  }
+
+  public confirm() {
+    if (this.props.status.value !== 'pending') {
+      throw new Error('Payment must be pending to confirm')
+    }
+
+    this.props.status = PaymentStatus.confirmed()
+    this.props.updatedAt = new Date()
+
+    this.addDomainEvent(new PaymentConfirmed(this))
   }
 }

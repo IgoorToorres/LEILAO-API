@@ -4,6 +4,11 @@ import { AggregateRoot } from '@/core/entities/aggregate-root'
 import { Lot } from './lot'
 import { Bid } from './bid'
 import { Money } from './value-objects/money'
+import { BidOutbid } from '../events/bid-outbid'
+import { AuctionFinished } from '../events/auction-finished'
+import { AuctionStarted } from '../events/auction-started'
+import { Winner } from './winner'
+import { WinnerDefined } from '../events/winner-defined'
 
 interface AuctionProps {
   title: string
@@ -89,6 +94,10 @@ export class Auction extends AggregateRoot<AuctionProps> {
 
     this.props.bids.push(bid)
 
+    if (lastBidForLot) {
+      this.addDomainEvent(new BidOutbid(lastBidForLot))
+    }
+
     if (this.props.extensionWindowMinutes > 0) {
       const windowMs = this.props.extensionWindowMinutes * 60 * 1000
       if (now.getTime() >= this.props.endAt.getTime() - windowMs) {
@@ -97,5 +106,46 @@ export class Auction extends AggregateRoot<AuctionProps> {
     }
 
     this.props.updatedAt = now
+  }
+
+  public start() {
+    if (this.props.status.value !== 'scheduled') {
+      throw new Error('Auction must be shceduled to start')
+    }
+
+    const now = new Date()
+
+    if (now < this.props.startAt) {
+      throw new Error('Auction cannot start before startAt')
+    }
+
+    this.props.status = AuctionStatus.running()
+    this.props.updatedAt = new Date()
+
+    this.addDomainEvent(new AuctionStarted(this))
+  }
+
+  public finish() {
+    if (this.props.status.value !== 'running') {
+      throw new Error('Auction must be running')
+    }
+
+    const bestBid = this.props.bids[this.props.bids.length - 1]
+    if (!bestBid) {
+      throw new Error('Cannot close auction without bids')
+    }
+
+    const winner = Winner.create({
+      auctionId: this.id,
+      bidId: bestBid.id,
+      finalPrice: bestBid.amount,
+      userId: bestBid.userId,
+    })
+
+    this.props.status = AuctionStatus.finished()
+    this.props.updatedAt = new Date()
+
+    this.addDomainEvent(new WinnerDefined(winner))
+    this.addDomainEvent(new AuctionFinished(this))
   }
 }
