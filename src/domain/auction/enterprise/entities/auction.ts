@@ -37,8 +37,20 @@ export class Auction extends AggregateRoot<AuctionProps> {
       id,
     )
 
+    if (Number.isNaN(props.startAt.getTime())) {
+      throw new Error('Invalid startAt')
+    }
+    if (Number.isNaN(props.endAt.getTime())) {
+      throw new Error('Invalid endAt')
+    }
     if (props.endAt <= props.startAt) {
       throw new Error('endAt must be after startAt')
+    }
+    if (props.minBidIncrementPercentage < 0) {
+      throw new Error('minBidIncrementPercentage must be >= 0')
+    }
+    if (props.extensionWindowMinutes < 0) {
+      throw new Error('extensionWindowMinutes must be >= 0')
     }
     if (
       auction.props.status.isScheduledOrRunning() &&
@@ -76,9 +88,11 @@ export class Auction extends AggregateRoot<AuctionProps> {
       ? lastBidForLot.amount.value
       : lot.startingPrice.value
 
-    const incrementValue = Math.ceil(
-      (referenceAmount * this.props.minBidIncrementPercentage) / 100,
-    )
+    const incrementValue = lastBidForLot
+      ? Math.ceil(
+          (referenceAmount * this.props.minBidIncrementPercentage) / 100,
+        )
+      : 0
     const minRequiredAmount = referenceAmount + incrementValue
 
     if (amount.value < minRequiredAmount) {
@@ -95,7 +109,7 @@ export class Auction extends AggregateRoot<AuctionProps> {
     this.props.bids.push(bid)
 
     if (lastBidForLot) {
-      this.addDomainEvent(new BidOutbid(lastBidForLot))
+      this.addDomainEvent(new BidOutbid(this.id, lastBidForLot))
     }
 
     if (this.props.extensionWindowMinutes > 0) {
@@ -110,7 +124,7 @@ export class Auction extends AggregateRoot<AuctionProps> {
 
   public start() {
     if (this.props.status.value !== 'scheduled') {
-      throw new Error('Auction must be shceduled to start')
+      throw new Error('Auction must be scheduled to start')
     }
 
     const now = new Date()
@@ -145,7 +159,7 @@ export class Auction extends AggregateRoot<AuctionProps> {
     this.props.status = AuctionStatus.finished()
     this.props.updatedAt = new Date()
 
-    this.addDomainEvent(new WinnerDefined(winner))
+    this.addDomainEvent(new WinnerDefined(this.id, winner))
     this.addDomainEvent(new AuctionFinished(this))
   }
 }

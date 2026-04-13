@@ -18,6 +18,15 @@ export class Lot extends Entity<LotProps> {
     if (props.startingPrice.value <= 0) {
       throw new Error('Starting price must be > 0')
     }
+    if (Number.isNaN(props.createdAt.getTime())) {
+      throw new Error('Invalid createdAt')
+    }
+    if (Number.isNaN(props.updatedAt.getTime())) {
+      throw new Error('Invalid updatedAt')
+    }
+    if (props.updatedAt < props.createdAt) {
+      throw new Error('updatedAt cannot be earlier than createdAt')
+    }
     if (
       props.reservePrice &&
       props.reservePrice.value < props.startingPrice.value
