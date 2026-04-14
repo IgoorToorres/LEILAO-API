@@ -5,6 +5,7 @@ import { resolve } from 'node:path'
 export default defineConfig({
   test: {
     environment: 'node',
+    setupFiles: ['tests/setup/setup.ts'],
   },
   resolve: {
     alias: {

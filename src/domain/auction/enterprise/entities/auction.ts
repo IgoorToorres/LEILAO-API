@@ -61,6 +61,14 @@ export class Auction extends AggregateRoot<AuctionProps> {
     return auction
   }
 
+  get status(): AuctionStatus {
+    return this.props.status
+  }
+
+  get startAt(): Date {
+    return this.props.startAt
+  }
+
   public placeBid(
     userId: UniqueEntityId,
     lotId: UniqueEntityId,
