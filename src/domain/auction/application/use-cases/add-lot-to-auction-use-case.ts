@@ -7,18 +7,18 @@ import { UserRepository } from '../repositories/user-repository'
 import { AuctionRepository } from '../repositories/auction-repository'
 import { UniqueEntityId } from '@/core/entities/unique-entity-id'
 
-interface AddLotToAuctionProps {
+interface AddLotToAuctionUseCaseProps {
   auctionId: UniqueEntityId
   userId: UniqueEntityId
   lots: Lot[]
 }
 
-type AddLotToAuctionResponse = Either<
+type AddLotToAuctionUseCaseResponse = Either<
   NotAllowedError | ResourceNotFoundError,
   { auction: Auction }
 >
 
-export class AddLotToAuction {
+export class AddLotToAuctionUseCase {
   constructor(
     private userRepo: UserRepository,
     private auctionRepo: AuctionRepository,
@@ -28,7 +28,7 @@ export class AddLotToAuction {
     auctionId,
     userId,
     lots,
-  }: AddLotToAuctionProps): Promise<AddLotToAuctionResponse> {
+  }: AddLotToAuctionUseCaseProps): Promise<AddLotToAuctionUseCaseResponse> {
     const user = await this.userRepo.findById(userId)
     if (!user) return left(new ResourceNotFoundError())
     if (user.status !== 'active') return left(new NotAllowedError())

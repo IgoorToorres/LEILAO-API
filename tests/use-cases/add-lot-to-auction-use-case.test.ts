@@ -15,11 +15,11 @@ import { UniqueEntityId } from '@/core/entities/unique-entity-id'
 import { ResourceNotFoundError } from '@/core/errors/errors/resource-not-found-error'
 import { NotAllowedError } from '@/core/errors/errors/not-allowed-error'
 import { describe, it, expect, beforeEach } from 'vitest'
-import { AddLotToAuction } from '@/domain/auction/application/use-cases/add-lot-to-auction'
+import { AddLotToAuctionUseCase } from '@/domain/auction/application/use-cases/add-lot-to-auction-use-case'
 
 let auctionRepository: InMemoryAuctionRepository
 let userRepository: InMemoryUserRepository
-let sut: AddLotToAuction
+let sut: AddLotToAuctionUseCase
 
 function makeLot() {
   const now = new Date()
@@ -80,7 +80,7 @@ describe('AddLotToAuction', () => {
   beforeEach(() => {
     auctionRepository = new InMemoryAuctionRepository()
     userRepository = new InMemoryUserRepository()
-    sut = new AddLotToAuction(userRepository, auctionRepository)
+    sut = new AddLotToAuctionUseCase(userRepository, auctionRepository)
   })
 
   it('should return ResourceNotFoundError if user does not exist', async () => {
