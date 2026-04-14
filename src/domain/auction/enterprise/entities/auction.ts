@@ -197,6 +197,34 @@ export class Auction extends AggregateRoot<AuctionProps> {
     this.addDomainEvent(new AuctionFinished(this))
   }
 
+  public schedule(startAt: Date, endAt: Date): void {
+    if (this.props.status.value !== 'draft') {
+      throw new Error('Auction must be in draft')
+    }
+
+    if (this.props.lots.length === 0) {
+      throw new Error('Auction must have at least one lot')
+    }
+
+    Auction.validateDates(startAt)
+    Auction.validateDates(endAt)
+
+    const now = new Date()
+
+    if (startAt <= now) {
+      throw new Error('startAt must be in the future')
+    }
+
+    if (endAt <= startAt) {
+      throw new Error('endAt must be after startAt')
+    }
+
+    this.props.startAt = startAt
+    this.props.endAt = endAt
+    this.props.status = AuctionStatus.scheduled()
+    this.props.updatedAt = new Date()
+  }
+
   private static validateTitle(title: string): void {
     if (title.trim().length === 0) {
       throw new Error('Invalid title')
