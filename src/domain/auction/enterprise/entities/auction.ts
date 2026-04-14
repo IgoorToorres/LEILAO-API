@@ -14,8 +14,8 @@ interface AuctionProps {
   title: string
   description: string
   status: AuctionStatus
-  startAt: Date
-  endAt: Date
+  startAt?: Date
+  endAt?: Date
   lots: Lot[]
   bids: Bid[]
   minBidIncrementPercentage: number
@@ -29,15 +29,23 @@ export class Auction extends AggregateRoot<AuctionProps> {
     return this.props.status
   }
 
-  get startAt(): Date {
+  get startAt(): Date | undefined {
     return this.props.startAt
+  }
+
+  get endAt(): Date | undefined {
+    return this.props.endAt
   }
 
   get bids(): Bid[] {
     return this.props.bids
   }
 
-  static create(props: AuctionProps, id?: UniqueEntityId) {
+  static create(
+    props: Omit<AuctionProps, 'createdAt' | 'updatedAt'> &
+      Partial<Pick<AuctionProps, 'createdAt' | 'updatedAt'>>,
+    id?: UniqueEntityId,
+  ) {
     const now = new Date()
 
     const auction = new Auction(
@@ -49,13 +57,13 @@ export class Auction extends AggregateRoot<AuctionProps> {
       id,
     )
 
-    if (Number.isNaN(props.startAt.getTime())) {
-      throw new Error('Invalid startAt')
-    }
-    if (Number.isNaN(props.endAt.getTime())) {
-      throw new Error('Invalid endAt')
-    }
-    if (props.endAt <= props.startAt) {
+    Auction.validateTitle(props.title)
+    Auction.validateDescription(props.description)
+
+    if (props.startAt) Auction.validateDates(props.startAt)
+    if (props.endAt) Auction.validateDates(props.endAt)
+
+    if (props.startAt && props.endAt && props.endAt <= props.startAt) {
       throw new Error('endAt must be after startAt')
     }
     if (props.minBidIncrementPercentage < 0) {
@@ -70,6 +78,15 @@ export class Auction extends AggregateRoot<AuctionProps> {
     ) {
       throw new Error('Auction must have at least one lot')
     }
+    if (
+      auction.props.status.isScheduledOrRunning() &&
+      (!auction.props.startAt || !auction.props.endAt)
+    ) {
+      throw new Error(
+        'startAt and endAt are required when auction is scheduled or running',
+      )
+    }
+
     return auction
   }
 
@@ -82,6 +99,9 @@ export class Auction extends AggregateRoot<AuctionProps> {
 
     if (this.props.status.value !== 'running') {
       throw new Error('Auction must be running')
+    }
+    if (!this.props.startAt || !this.props.endAt) {
+      throw new Error('Auction must have startAt and endAt')
     }
     if (now < this.props.startAt || now > this.props.endAt) {
       throw new Error('Bid is outside auction time window')
@@ -138,9 +158,11 @@ export class Auction extends AggregateRoot<AuctionProps> {
     if (this.props.status.value !== 'scheduled') {
       throw new Error('Auction must be scheduled to start')
     }
+    if (!this.props.startAt) {
+      throw new Error('startAt is required to start auction')
+    }
 
     const now = new Date()
-
     if (now < this.props.startAt) {
       throw new Error('Auction cannot start before startAt')
     }
@@ -173,5 +195,23 @@ export class Auction extends AggregateRoot<AuctionProps> {
 
     this.addDomainEvent(new WinnerDefined(this.id, winner))
     this.addDomainEvent(new AuctionFinished(this))
+  }
+
+  private static validateTitle(title: string): void {
+    if (title.trim().length === 0) {
+      throw new Error('Invalid title')
+    }
+  }
+
+  private static validateDescription(description: string): void {
+    if (description.trim().length === 0) {
+      throw new Error('Invalid description')
+    }
+  }
+
+  private static validateDates(date: Date): void {
+    if (date && Number.isNaN(date.getTime())) {
+      throw new Error('Invalid startAt or endAt')
+    }
   }
 }
