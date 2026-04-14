@@ -25,6 +25,18 @@ interface AuctionProps {
 }
 
 export class Auction extends AggregateRoot<AuctionProps> {
+  get status(): AuctionStatus {
+    return this.props.status
+  }
+
+  get startAt(): Date {
+    return this.props.startAt
+  }
+
+  get bids(): Bid[] {
+    return this.props.bids
+  }
+
   static create(props: AuctionProps, id?: UniqueEntityId) {
     const now = new Date()
 
@@ -59,18 +71,6 @@ export class Auction extends AggregateRoot<AuctionProps> {
       throw new Error('Auction must have at least one lot')
     }
     return auction
-  }
-
-  get status(): AuctionStatus {
-    return this.props.status
-  }
-
-  get startAt(): Date {
-    return this.props.startAt
-  }
-
-  get bids(): Bid[] {
-    return this.props.bids
   }
 
   public placeBid(
