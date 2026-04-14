@@ -225,6 +225,25 @@ export class Auction extends AggregateRoot<AuctionProps> {
     this.props.updatedAt = new Date()
   }
 
+  public addLot(lot: Lot): void {
+    if (this.props.status.value !== 'draft') {
+      throw new Error('Auction must be in draft to add lot')
+    }
+    const alredyExists = this.props.lots.some((item) => item.id.equals(lot.id))
+    if (alredyExists) {
+      throw new Error('Lot alredy Exists in this auction')
+    }
+
+    this.props.lots.push(lot)
+    this.props.updatedAt = new Date()
+  }
+
+  public addLots(lots: Lot[]): void {
+    for (const lot of lots) {
+      this.addLot(lot)
+    }
+  }
+
   private static validateTitle(title: string): void {
     if (title.trim().length === 0) {
       throw new Error('Invalid title')

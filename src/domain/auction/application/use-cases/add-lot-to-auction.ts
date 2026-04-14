@@ -1,0 +1,49 @@
+import { Either, left, right } from '@/core/either'
+import { Lot } from '../../enterprise/entities/lot'
+import { NotAllowedError } from '@/core/errors/errors/not-allowed-error'
+import { ResourceNotFoundError } from '@/core/errors/errors/resource-not-found-error'
+import { Auction } from '../../enterprise/entities/auction'
+import { UserRepository } from '../repositories/user-repository'
+import { AuctionRepository } from '../repositories/auction-repository'
+import { UniqueEntityId } from '@/core/entities/unique-entity-id'
+
+interface AddLotToAuctionProps {
+  auctionId: UniqueEntityId
+  userId: UniqueEntityId
+  lots: Lot[]
+}
+
+type AddLotToAuctionResponse = Either<
+  NotAllowedError | ResourceNotFoundError,
+  { auction: Auction }
+>
+
+export class AddLotToAuction {
+  constructor(
+    private userRepo: UserRepository,
+    private auctionRepo: AuctionRepository,
+  ) {}
+
+  async execute({
+    auctionId,
+    userId,
+    lots,
+  }: AddLotToAuctionProps): Promise<AddLotToAuctionResponse> {
+    const user = await this.userRepo.findById(userId)
+    if (!user) return left(new ResourceNotFoundError())
+    if (user.status !== 'active') return left(new NotAllowedError())
+
+    const auction = await this.auctionRepo.findById(auctionId)
+    if (!auction) return left(new ResourceNotFoundError())
+    if (lots.length === 0) return left(new NotAllowedError())
+
+    try {
+      auction.addLots(lots)
+      await this.auctionRepo.update(auction)
+      return right({ auction })
+    } catch (error) {
+      console.error(error)
+      return left(new NotAllowedError())
+    }
+  }
+}
