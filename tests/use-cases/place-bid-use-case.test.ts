@@ -146,7 +146,6 @@ describe('PlaceBidUseCase', () => {
       userId: user.id,
     })
 
-    console.log(result.value)
     expect(result.isRight()).toBe(true)
   })
 })
