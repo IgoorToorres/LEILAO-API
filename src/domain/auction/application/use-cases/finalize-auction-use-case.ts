@@ -6,6 +6,7 @@ import { Either, left, right } from '@/core/either'
 import { NotAllowedError } from '@/core/errors/errors/not-allowed-error'
 import { ResourceNotFoundError } from '@/core/errors/errors/resource-not-found-error'
 import { Auction } from '../../enterprise/entities/auction'
+import { DomainEvents } from '@/core/events/domain-events'
 
 interface FinalizeAuctionUseCaseProps {
   auctionId: UniqueEntityId
@@ -45,6 +46,7 @@ export class FinalizeAuctionUseCase {
     try {
       auction.finalize()
       await this.auctionRepo.update(auction)
+      DomainEvents.dispatchEventsForAggregate(auction.id)
       return right({ auction })
     } catch (error) {
       console.error(error)
