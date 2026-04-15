@@ -30,4 +30,14 @@ export class InMemoryPaymentRepository implements PaymentRepository {
 
     this.items[itemIndex] = payment
   }
+
+  async findByAuctionId(auctionId: UniqueEntityId) {
+    const payment = this.items.find((item) => item.auctionId.equals(auctionId))
+
+    if (!payment) {
+      return null
+    }
+
+    return payment
+  }
 }

@@ -9,6 +9,7 @@ import { AuctionFinished } from '../events/auction-finished'
 import { AuctionStarted } from '../events/auction-started'
 import { Winner } from './winner'
 import { WinnerDefined } from '../events/winner-defined'
+import { DomainEvents } from '@/core/events/domain-events'
 
 interface AuctionProps {
   title: string
@@ -235,6 +236,16 @@ export class Auction extends AggregateRoot<AuctionProps> {
     }
 
     this.props.lots.push(lot)
+    this.props.updatedAt = new Date()
+  }
+
+  public finalize(): void {
+    if (this.props.status.value !== 'finished') {
+      throw new Error('Auction must be finished to finlize')
+    }
+
+    DomainEvents.dispatchEventsForAggregate(this.id)
+
     this.props.updatedAt = new Date()
   }
 
