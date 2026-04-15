@@ -48,16 +48,21 @@ export class PlaceBidUseCase {
       return left(new ResourceNotFoundError())
     }
 
-    const bidAmount = Money.create(amount)
+    try {
+      const bidAmount = Money.create(amount)
 
-    auction.placeBid(userId, lotId, bidAmount)
+      auction.placeBid(userId, lotId, bidAmount)
 
-    await this.auctionRepository.update(auction)
+      await this.auctionRepository.update(auction)
 
-    DomainEvents.dispatchEventsForAggregate(auction.id)
+      DomainEvents.dispatchEventsForAggregate(auction.id)
 
-    return right({
-      auction,
-    })
+      return right({
+        auction,
+      })
+    } catch (error) {
+      console.error(error)
+      return left(new NotAllowedError())
+    }
   }
 }
