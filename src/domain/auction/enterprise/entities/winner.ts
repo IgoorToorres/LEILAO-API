@@ -41,4 +41,20 @@ export class Winner extends Entity<WinnerProps> {
 
     return winner
   }
+
+  get auctionId(): UniqueEntityId {
+    return this.props.auctionId
+  }
+
+  get userId(): UniqueEntityId {
+    return this.props.userId
+  }
+
+  get bidId(): UniqueEntityId {
+    return this.props.bidId
+  }
+
+  get finalPrice(): Money {
+    return this.props.finalPrice
+  }
 }

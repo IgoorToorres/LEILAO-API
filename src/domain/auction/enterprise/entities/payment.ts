@@ -14,6 +14,18 @@ interface PaymentProps {
 }
 
 export class Payment extends AggregateRoot<PaymentProps> {
+  get auctionId() {
+    return this.props.auctionId
+  }
+
+  get status() {
+    return this.props.status
+  }
+
+  get amount() {
+    return this.props.amount
+  }
+
   static create(
     props: Omit<PaymentProps, 'createdAt' | 'updatedAt'> &
       Partial<Pick<PaymentProps, 'createdAt' | 'updatedAt'>>,
