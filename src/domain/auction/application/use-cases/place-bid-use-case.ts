@@ -7,16 +7,17 @@ import { DomainEvents } from '@/core/events/domain-events'
 import { Either, left, right } from '@/core/either'
 import { ResourceNotFoundError } from '@/core/errors/errors/resource-not-found-error'
 import { NotAllowedError } from '@/core/errors/errors/not-allowed-error'
+import { DomainError } from '@/core/errors/errors/domain-error'
 
-interface PlaceBideUseCaseProps {
+interface PlaceBidUseCaseProps {
   auctionId: UniqueEntityId
   userId: UniqueEntityId
   lotId: UniqueEntityId
   amount: number
 }
 
-type PlaceBideUseCaseResponse = Either<
-  ResourceNotFoundError | NotAllowedError,
+type PlaceBidUseCaseResponse = Either<
+  ResourceNotFoundError | NotAllowedError | DomainError,
   { auction: Auction }
 >
 
@@ -31,7 +32,7 @@ export class PlaceBidUseCase {
     userId,
     amount,
     lotId,
-  }: PlaceBideUseCaseProps): Promise<PlaceBideUseCaseResponse> {
+  }: PlaceBidUseCaseProps): Promise<PlaceBidUseCaseResponse> {
     const user = await this.userRepository.findById(userId)
 
     if (!user) {
@@ -39,6 +40,10 @@ export class PlaceBidUseCase {
     }
 
     if (user.status !== 'active') {
+      return left(new NotAllowedError())
+    }
+
+    if (user.verificationStatus !== 'approved') {
       return left(new NotAllowedError())
     }
 
@@ -61,8 +66,10 @@ export class PlaceBidUseCase {
         auction,
       })
     } catch (error) {
-      console.error(error)
-      return left(new NotAllowedError())
+      if (error instanceof Error) {
+        return left(new DomainError(error.message))
+      }
+      return left(new DomainError('Unexpected error'))
     }
   }
 }

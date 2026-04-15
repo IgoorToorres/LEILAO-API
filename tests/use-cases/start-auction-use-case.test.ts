@@ -14,6 +14,7 @@ import { Money } from '@/domain/auction/enterprise/entities/value-objects/money'
 import { UniqueEntityId } from '@/core/entities/unique-entity-id'
 import { ResourceNotFoundError } from '@/core/errors/errors/resource-not-found-error'
 import { NotAllowedError } from '@/core/errors/errors/not-allowed-error'
+import { DomainError } from '@/core/errors/errors/domain-error'
 import { describe, it, expect, beforeEach } from 'vitest'
 import { StartAuctionUseCase } from '@/domain/auction/application/use-cases/start-auction-use-case'
 
@@ -142,7 +143,7 @@ describe('StartAuctionUseCase', () => {
     }
   })
 
-  it('should return NotAllowedError if startAt is in the future', async () => {
+  it('should return DomainError if startAt is in the future', async () => {
     const lot = makeLot()
     const auction = makeScheduledAuction(lot, new Date(Date.now() + 60 * 1000))
     const user = makeUser()
@@ -157,7 +158,7 @@ describe('StartAuctionUseCase', () => {
 
     expect(result.isLeft()).toBe(true)
     if (result.isLeft()) {
-      expect(result.value).toBeInstanceOf(NotAllowedError)
+      expect(result.value).toBeInstanceOf(DomainError)
     }
   })
 
@@ -177,7 +178,7 @@ describe('StartAuctionUseCase', () => {
     expect(result.isRight()).toBe(true)
   })
 
-  it('should return NotAllowedError if auction is not scheduled', async () => {
+  it('should return DomainError if auction is not scheduled', async () => {
     const lot = makeLot()
     const auction = makeRunningAuction(lot)
     const user = makeUser()
@@ -192,7 +193,7 @@ describe('StartAuctionUseCase', () => {
 
     expect(result.isLeft()).toBe(true)
     if (result.isLeft()) {
-      expect(result.value).toBeInstanceOf(NotAllowedError)
+      expect(result.value).toBeInstanceOf(DomainError)
     }
   })
 })

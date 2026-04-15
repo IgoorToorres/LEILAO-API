@@ -37,7 +37,15 @@ export class Lot extends Entity<LotProps> {
     return new Lot(props, id)
   }
 
+  get title(): string {
+    return this.props.title
+  }
+
   get startingPrice(): Money {
     return this.props.startingPrice
+  }
+
+  get reservePrice(): Money | undefined {
+    return this.props.reservePrice
   }
 }

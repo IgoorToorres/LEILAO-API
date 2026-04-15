@@ -3,6 +3,7 @@ export type AuctionStatusValue =
   | 'scheduled'
   | 'running'
   | 'finished'
+  | 'finalized'
   | 'canceled'
 
 export class AuctionStatus {
@@ -26,6 +27,10 @@ export class AuctionStatus {
 
   static finished() {
     return new AuctionStatus('finished')
+  }
+
+  static finalized() {
+    return new AuctionStatus('finalized')
   }
 
   static canceled() {

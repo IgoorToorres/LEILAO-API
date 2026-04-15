@@ -14,6 +14,7 @@ import { Money } from '@/domain/auction/enterprise/entities/value-objects/money'
 import { UniqueEntityId } from '@/core/entities/unique-entity-id'
 import { ResourceNotFoundError } from '@/core/errors/errors/resource-not-found-error'
 import { NotAllowedError } from '@/core/errors/errors/not-allowed-error'
+import { DomainError } from '@/core/errors/errors/domain-error'
 import { describe, it, expect, beforeEach } from 'vitest'
 import { FinishAuctionUseCase } from '@/domain/auction/application/use-cases/finish-auction-use-case'
 
@@ -145,7 +146,7 @@ describe('FinishAuctionUseCase', () => {
     }
   })
 
-  it('should return NotAllowedError if auction is not running', async () => {
+  it('should return DomainError if auction is not running', async () => {
     const lot = makeLot()
     const auction = makeScheduledAuction(lot)
     const user = makeUser()
@@ -160,11 +161,11 @@ describe('FinishAuctionUseCase', () => {
 
     expect(result.isLeft()).toBe(true)
     if (result.isLeft()) {
-      expect(result.value).toBeInstanceOf(NotAllowedError)
+      expect(result.value).toBeInstanceOf(DomainError)
     }
   })
 
-  it('should return NotAllowedError if auction has no bids', async () => {
+  it('should return DomainError if auction has no bids', async () => {
     const lot = makeLot()
     const auction = makeRunningAuction(lot)
     const user = makeUser()
@@ -179,7 +180,7 @@ describe('FinishAuctionUseCase', () => {
 
     expect(result.isLeft()).toBe(true)
     if (result.isLeft()) {
-      expect(result.value).toBeInstanceOf(NotAllowedError)
+      expect(result.value).toBeInstanceOf(DomainError)
     }
   })
 

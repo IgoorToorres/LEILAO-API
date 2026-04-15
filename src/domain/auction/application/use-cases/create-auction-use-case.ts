@@ -5,6 +5,7 @@ import { Lot } from '../../enterprise/entities/lot'
 import { Either, left, right } from '@/core/either'
 import { NotAllowedError } from '@/core/errors/errors/not-allowed-error'
 import { ResourceNotFoundError } from '@/core/errors/errors/resource-not-found-error'
+import { DomainError } from '@/core/errors/errors/domain-error'
 import { Auction } from '../../enterprise/entities/auction'
 import { AuctionStatus } from '../../enterprise/entities/value-objects/auction/auction-status'
 
@@ -20,7 +21,7 @@ interface CreateAuctionUseCaseProps {
 }
 
 type CreateAuctionUseCaseResponse = Either<
-  NotAllowedError | ResourceNotFoundError,
+  NotAllowedError | ResourceNotFoundError | DomainError,
   { auction: Auction }
 >
 
@@ -47,6 +48,9 @@ export class CreateAuctionUseCase {
     if (user.status !== 'active') {
       return left(new NotAllowedError())
     }
+    if (user.verificationStatus !== 'approved') {
+      return left(new NotAllowedError())
+    }
 
     try {
       const auction = Auction.create({
@@ -67,8 +71,10 @@ export class CreateAuctionUseCase {
         auction,
       })
     } catch (error) {
-      console.error(error)
-      return left(new NotAllowedError())
+      if (error instanceof Error) {
+        return left(new DomainError(error.message))
+      }
+      return left(new DomainError('Unexpected error'))
     }
   }
 }

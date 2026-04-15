@@ -14,6 +14,7 @@ import { Money } from '@/domain/auction/enterprise/entities/value-objects/money'
 import { UniqueEntityId } from '@/core/entities/unique-entity-id'
 import { ResourceNotFoundError } from '@/core/errors/errors/resource-not-found-error'
 import { NotAllowedError } from '@/core/errors/errors/not-allowed-error'
+import { DomainError } from '@/core/errors/errors/domain-error'
 import { describe, it, expect, beforeEach } from 'vitest'
 import { ScheduleAuctionUseCase } from '@/domain/auction/application/use-cases/schedule-auction-use-case'
 
@@ -147,7 +148,7 @@ describe('ScheduleAuctionUseCase', () => {
     }
   })
 
-  it('should return NotAllowedError if auction is not draft', async () => {
+  it('should return DomainError if auction is not draft', async () => {
     const lot = makeLot()
     const auction = makeScheduledAuction(lot)
     const user = makeUser()
@@ -167,11 +168,11 @@ describe('ScheduleAuctionUseCase', () => {
 
     expect(result.isLeft()).toBe(true)
     if (result.isLeft()) {
-      expect(result.value).toBeInstanceOf(NotAllowedError)
+      expect(result.value).toBeInstanceOf(DomainError)
     }
   })
 
-  it('should return NotAllowedError if auction has no lots', async () => {
+  it('should return DomainError if auction has no lots', async () => {
     const auction = makeDraftAuction([])
     const user = makeUser()
 
@@ -190,11 +191,11 @@ describe('ScheduleAuctionUseCase', () => {
 
     expect(result.isLeft()).toBe(true)
     if (result.isLeft()) {
-      expect(result.value).toBeInstanceOf(NotAllowedError)
+      expect(result.value).toBeInstanceOf(DomainError)
     }
   })
 
-  it('should return NotAllowedError if startAt is in the past', async () => {
+  it('should return DomainError if startAt is in the past', async () => {
     const auction = makeDraftAuction([makeLot()])
     const user = makeUser()
 
@@ -213,11 +214,11 @@ describe('ScheduleAuctionUseCase', () => {
 
     expect(result.isLeft()).toBe(true)
     if (result.isLeft()) {
-      expect(result.value).toBeInstanceOf(NotAllowedError)
+      expect(result.value).toBeInstanceOf(DomainError)
     }
   })
 
-  it('should return NotAllowedError if endAt is before startAt', async () => {
+  it('should return DomainError if endAt is before startAt', async () => {
     const auction = makeDraftAuction([makeLot()])
     const user = makeUser()
 
@@ -236,7 +237,7 @@ describe('ScheduleAuctionUseCase', () => {
 
     expect(result.isLeft()).toBe(true)
     if (result.isLeft()) {
-      expect(result.value).toBeInstanceOf(NotAllowedError)
+      expect(result.value).toBeInstanceOf(DomainError)
     }
   })
 

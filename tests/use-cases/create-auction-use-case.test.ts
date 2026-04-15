@@ -12,6 +12,7 @@ import { Money } from '@/domain/auction/enterprise/entities/value-objects/money'
 import { UniqueEntityId } from '@/core/entities/unique-entity-id'
 import { ResourceNotFoundError } from '@/core/errors/errors/resource-not-found-error'
 import { NotAllowedError } from '@/core/errors/errors/not-allowed-error'
+import { DomainError } from '@/core/errors/errors/domain-error'
 import { describe, it, expect, beforeEach } from 'vitest'
 import { CreateAuctionUseCase } from '@/domain/auction/application/use-cases/create-auction-use-case'
 
@@ -120,7 +121,7 @@ describe('CreateAuctionUseCase', () => {
     expect(result.isRight()).toBe(true)
   })
 
-  it('should return NotAllowedError if minBidIncrementPercentage is negative', async () => {
+  it('should return DomainError if minBidIncrementPercentage is negative', async () => {
     const user = makeUser()
     await userRepository.create(user)
 
@@ -134,11 +135,11 @@ describe('CreateAuctionUseCase', () => {
 
     expect(result.isLeft()).toBe(true)
     if (result.isLeft()) {
-      expect(result.value).toBeInstanceOf(NotAllowedError)
+      expect(result.value).toBeInstanceOf(DomainError)
     }
   })
 
-  it('should return NotAllowedError if extensionWindowMinutes is negative', async () => {
+  it('should return DomainError if extensionWindowMinutes is negative', async () => {
     const user = makeUser()
     await userRepository.create(user)
 
@@ -152,11 +153,11 @@ describe('CreateAuctionUseCase', () => {
 
     expect(result.isLeft()).toBe(true)
     if (result.isLeft()) {
-      expect(result.value).toBeInstanceOf(NotAllowedError)
+      expect(result.value).toBeInstanceOf(DomainError)
     }
   })
 
-  it('should return NotAllowedError if startAt/endAt are invalid when provided', async () => {
+  it('should return DomainError if startAt/endAt are invalid when provided', async () => {
     const user = makeUser()
     await userRepository.create(user)
 
@@ -174,11 +175,11 @@ describe('CreateAuctionUseCase', () => {
 
     expect(result.isLeft()).toBe(true)
     if (result.isLeft()) {
-      expect(result.value).toBeInstanceOf(NotAllowedError)
+      expect(result.value).toBeInstanceOf(DomainError)
     }
   })
 
-  it('should return NotAllowedError if endAt is before startAt when provided', async () => {
+  it('should return DomainError if endAt is before startAt when provided', async () => {
     const user = makeUser()
     await userRepository.create(user)
 
@@ -197,7 +198,7 @@ describe('CreateAuctionUseCase', () => {
 
     expect(result.isLeft()).toBe(true)
     if (result.isLeft()) {
-      expect(result.value).toBeInstanceOf(NotAllowedError)
+      expect(result.value).toBeInstanceOf(DomainError)
     }
   })
 

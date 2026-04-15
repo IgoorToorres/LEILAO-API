@@ -13,18 +13,20 @@ export class OnWinnerDefinedCreatePayment implements EventHandler {
   setupSubscriptions(): void {
     DomainEvents.register((event: WinnerDefined) => {
       // eslint-disable-next-line no-void
-      void this.createPayment(event)
+      void this.createPayments(event).catch(console.error)
     }, WinnerDefined.name)
   }
 
-  private async createPayment(event: WinnerDefined): Promise<void> {
-    const payment = Payment.create({
-      auctionId: event.auctionId,
-      userId: event.winner.userId,
-      amount: event.winner.finalPrice,
-      status: PaymentStatus.pending(),
-    })
+  private async createPayments(event: WinnerDefined): Promise<void> {
+    for (const winner of event.winners) {
+      const payment = Payment.create({
+        auctionId: event.auctionId,
+        userId: winner.userId,
+        amount: winner.finalPrice,
+        status: PaymentStatus.pending(),
+      })
 
-    await this.paymentRepository.create(payment)
+      await this.paymentRepository.create(payment)
+    }
   }
 }

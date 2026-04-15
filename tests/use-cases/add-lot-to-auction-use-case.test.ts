@@ -14,6 +14,7 @@ import { Money } from '@/domain/auction/enterprise/entities/value-objects/money'
 import { UniqueEntityId } from '@/core/entities/unique-entity-id'
 import { ResourceNotFoundError } from '@/core/errors/errors/resource-not-found-error'
 import { NotAllowedError } from '@/core/errors/errors/not-allowed-error'
+import { DomainError } from '@/core/errors/errors/domain-error'
 import { describe, it, expect, beforeEach } from 'vitest'
 import { AddLotToAuctionUseCase } from '@/domain/auction/application/use-cases/add-lot-to-auction-use-case'
 
@@ -139,7 +140,7 @@ describe('AddLotToAuction', () => {
     }
   })
 
-  it('should return NotAllowedError if auction is not draft', async () => {
+  it('should return DomainError if auction is not draft', async () => {
     const lot = makeLot()
     const auction = makeScheduledAuction(lot)
     const user = makeUser()
@@ -155,7 +156,7 @@ describe('AddLotToAuction', () => {
 
     expect(result.isLeft()).toBe(true)
     if (result.isLeft()) {
-      expect(result.value).toBeInstanceOf(NotAllowedError)
+      expect(result.value).toBeInstanceOf(DomainError)
     }
   })
 
@@ -175,8 +176,7 @@ describe('AddLotToAuction', () => {
 
     expect(result.isRight()).toBe(true)
     if (result.isRight()) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((result.value.auction as any).props.lots.length).toBe(1)
+      expect(result.value.auction.lots.length).toBe(1)
     }
   })
 })

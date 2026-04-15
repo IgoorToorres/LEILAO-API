@@ -4,6 +4,7 @@ import { UserRepository } from '../repositories/user-repository'
 import { Either, left, right } from '@/core/either'
 import { ResourceNotFoundError } from '@/core/errors/errors/resource-not-found-error'
 import { NotAllowedError } from '@/core/errors/errors/not-allowed-error'
+import { DomainError } from '@/core/errors/errors/domain-error'
 import { Auction } from '../../enterprise/entities/auction'
 import { DomainEvents } from '@/core/events/domain-events'
 
@@ -13,7 +14,7 @@ interface StartAuctionUseCaseProps {
 }
 
 type StartAuctionUseCaseResponse = Either<
-  ResourceNotFoundError | NotAllowedError,
+  ResourceNotFoundError | NotAllowedError | DomainError,
   { auction: Auction }
 >
 
@@ -37,6 +38,10 @@ export class StartAuctionUseCase {
       return left(new NotAllowedError())
     }
 
+    if (user.verificationStatus !== 'approved') {
+      return left(new NotAllowedError())
+    }
+
     const auction = await this.auctionRepo.findById(auctionId)
 
     if (!auction) {
@@ -46,8 +51,10 @@ export class StartAuctionUseCase {
     try {
       auction.start()
     } catch (error) {
-      console.error(error)
-      return left(new NotAllowedError())
+      if (error instanceof Error) {
+        return left(new DomainError(error.message))
+      }
+      return left(new DomainError('Unexpected error'))
     }
 
     await this.auctionRepo.update(auction)

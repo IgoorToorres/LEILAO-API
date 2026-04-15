@@ -31,6 +31,13 @@ export class InMemoryPaymentRepository implements PaymentRepository {
     this.items[itemIndex] = payment
   }
 
+  async findAllPendingByAuctionId(auctionId: UniqueEntityId): Promise<Payment[]> {
+    return this.items.filter(
+      (item) =>
+        item.auctionId.equals(auctionId) && item.status.value === 'pending',
+    )
+  }
+
   async findByAuctionId(auctionId: UniqueEntityId) {
     const payment = this.items.find((item) => item.auctionId.equals(auctionId))
 

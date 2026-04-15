@@ -4,6 +4,7 @@ import { Entity } from '@/core/entities/entity'
 
 interface WinnerProps {
   auctionId: UniqueEntityId
+  lotId: UniqueEntityId
   userId: UniqueEntityId
   bidId: UniqueEntityId
   finalPrice: Money
@@ -16,8 +17,8 @@ export class Winner extends Entity<WinnerProps> {
       Partial<Pick<WinnerProps, 'createdAt'>>,
     id?: UniqueEntityId,
   ) {
-    if (!props.auctionId || !props.userId || !props.bidId) {
-      throw new Error('Winner must have auctionId, userId and bidId')
+    if (!props.auctionId || !props.lotId || !props.userId || !props.bidId) {
+      throw new Error('Winner must have auctionId, lotId, userId and bidId')
     }
 
     const now = new Date()
@@ -44,6 +45,10 @@ export class Winner extends Entity<WinnerProps> {
 
   get auctionId(): UniqueEntityId {
     return this.props.auctionId
+  }
+
+  get lotId(): UniqueEntityId {
+    return this.props.lotId
   }
 
   get userId(): UniqueEntityId {

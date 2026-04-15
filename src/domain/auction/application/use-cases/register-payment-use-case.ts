@@ -2,6 +2,7 @@ import { UniqueEntityId } from '@/core/entities/unique-entity-id'
 import { Either, left, right } from '@/core/either'
 import { ResourceNotFoundError } from '@/core/errors/errors/resource-not-found-error'
 import { NotAllowedError } from '@/core/errors/errors/not-allowed-error'
+import { DomainError } from '@/core/errors/errors/domain-error'
 import { Payment } from '../../enterprise/entities/payment'
 import { PaymentRepository } from '../repositories/payment-repository'
 import { AuctionRepository } from '../repositories/auction-repository'
@@ -16,7 +17,7 @@ interface RegisterPaymentUseCaseProps {
 }
 
 type RegisterPaymentUseCaseResponse = Either<
-  ResourceNotFoundError | NotAllowedError,
+  ResourceNotFoundError | NotAllowedError | DomainError,
   { payment: Payment }
 >
 
@@ -38,23 +39,31 @@ export class RegisterPaymentUseCase {
     if (!auction) return left(new ResourceNotFoundError())
     if (auction.status.value !== 'finished') return left(new NotAllowedError())
 
-    if (amount <= 0) return left(new NotAllowedError())
-    if (externalReference.trim().length === 0)
-      return left(new NotAllowedError())
+    if (amount <= 0)
+      return left(new DomainError('Amount must be greater than 0'))
+    if (externalReference.trim().length === 0) {
+      return left(new DomainError('External reference is required'))
+    }
 
-    if (Number.isNaN(paidAt.getTime())) return left(new NotAllowedError())
-    if (paidAt.getTime() > Date.now()) return left(new NotAllowedError())
+    if (Number.isNaN(paidAt.getTime())) {
+      return left(new DomainError('Invalid payment date'))
+    }
+    if (paidAt.getTime() > Date.now()) {
+      return left(new DomainError('Payment date cannot be in the future'))
+    }
 
-    // Só para manter o input validado/utilizado neste estágio
     if (!['pix', 'credit_card', 'bank_transfer'].includes(method)) {
-      return left(new NotAllowedError())
+      return left(new DomainError('Invalid payment method'))
     }
 
     const payment = await this.paymentRepo.findPendingByAuctionId(auctionId)
     if (!payment) return left(new NotAllowedError())
 
-    // Regra importante: valor pago deve bater com o valor esperado
-    if (payment.amount.value !== amount) return left(new NotAllowedError())
+    if (payment.amount.value !== amount) {
+      return left(
+        new DomainError('Payment amount does not match expected value'),
+      )
+    }
 
     try {
       payment.confirm()
@@ -65,8 +74,10 @@ export class RegisterPaymentUseCase {
 
       return right({ payment })
     } catch (error) {
-      console.error(error)
-      return left(new NotAllowedError())
+      if (error instanceof Error) {
+        return left(new DomainError(error.message))
+      }
+      return left(new DomainError('Unexpected error'))
     }
   }
 }

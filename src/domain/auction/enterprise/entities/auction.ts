@@ -18,6 +18,7 @@ interface AuctionProps {
   endAt?: Date
   lots: Lot[]
   bids: Bid[]
+  winners: Winner[]
   minBidIncrementPercentage: number
   extensionWindowMinutes: number
   createdAt: Date
@@ -25,6 +26,14 @@ interface AuctionProps {
 }
 
 export class Auction extends AggregateRoot<AuctionProps> {
+  get title(): string {
+    return this.props.title
+  }
+
+  get description(): string {
+    return this.props.description
+  }
+
   get status(): AuctionStatus {
     return this.props.status
   }
@@ -37,13 +46,37 @@ export class Auction extends AggregateRoot<AuctionProps> {
     return this.props.endAt
   }
 
+  get lots(): Lot[] {
+    return this.props.lots
+  }
+
   get bids(): Bid[] {
     return this.props.bids
   }
 
+  get winners(): Winner[] {
+    return this.props.winners
+  }
+
+  get minBidIncrementPercentage(): number {
+    return this.props.minBidIncrementPercentage
+  }
+
+  get extensionWindowMinutes(): number {
+    return this.props.extensionWindowMinutes
+  }
+
+  get createdAt(): Date {
+    return this.props.createdAt
+  }
+
+  get updatedAt(): Date {
+    return this.props.updatedAt
+  }
+
   static create(
-    props: Omit<AuctionProps, 'createdAt' | 'updatedAt'> &
-      Partial<Pick<AuctionProps, 'createdAt' | 'updatedAt'>>,
+    props: Omit<AuctionProps, 'createdAt' | 'updatedAt' | 'winners'> &
+      Partial<Pick<AuctionProps, 'createdAt' | 'updatedAt' | 'winners'>>,
     id?: UniqueEntityId,
   ) {
     const now = new Date()
@@ -51,6 +84,7 @@ export class Auction extends AggregateRoot<AuctionProps> {
     const auction = new Auction(
       {
         ...props,
+        winners: props.winners ?? [],
         createdAt: props.createdAt ?? now,
         updatedAt: props.updatedAt ?? now,
       },
@@ -60,8 +94,8 @@ export class Auction extends AggregateRoot<AuctionProps> {
     Auction.validateTitle(props.title)
     Auction.validateDescription(props.description)
 
-    if (props.startAt) Auction.validateDates(props.startAt)
-    if (props.endAt) Auction.validateDates(props.endAt)
+    if (props.startAt) Auction.validateDate(props.startAt)
+    if (props.endAt) Auction.validateDate(props.endAt)
 
     if (props.startAt && props.endAt && props.endAt <= props.startAt) {
       throw new Error('endAt must be after startAt')
@@ -128,7 +162,9 @@ export class Auction extends AggregateRoot<AuctionProps> {
     const minRequiredAmount = referenceAmount + incrementValue
 
     if (amount.value < minRequiredAmount) {
-      throw new Error('Bid amount is too low')
+      throw new Error(
+        `Bid amount is too low. Minimum required: ${minRequiredAmount}`,
+      )
     }
 
     const bid = Bid.create({
@@ -178,22 +214,46 @@ export class Auction extends AggregateRoot<AuctionProps> {
       throw new Error('Auction must be running')
     }
 
-    const bestBid = this.props.bids[this.props.bids.length - 1]
-    if (!bestBid) {
-      throw new Error('Cannot close auction without bids')
+    const winners: Winner[] = []
+
+    for (const lot of this.props.lots) {
+      const bidsForLot = this.props.bids.filter((bid) =>
+        bid.lotId.equals(lot.id),
+      )
+
+      if (bidsForLot.length === 0) continue
+
+      const bestBid = bidsForLot[bidsForLot.length - 1]
+
+      if (
+        lot.reservePrice &&
+        bestBid.amount.value < lot.reservePrice.value
+      ) {
+        continue
+      }
+
+      winners.push(
+        Winner.create({
+          auctionId: this.id,
+          lotId: lot.id,
+          bidId: bestBid.id,
+          finalPrice: bestBid.amount,
+          userId: bestBid.userId,
+        }),
+      )
     }
 
-    const winner = Winner.create({
-      auctionId: this.id,
-      bidId: bestBid.id,
-      finalPrice: bestBid.amount,
-      userId: bestBid.userId,
-    })
+    if (winners.length === 0) {
+      throw new Error(
+        'Cannot finish auction without at least one winning bid',
+      )
+    }
 
+    this.props.winners = winners
     this.props.status = AuctionStatus.finished()
     this.props.updatedAt = new Date()
 
-    this.addDomainEvent(new WinnerDefined(this.id, winner))
+    this.addDomainEvent(new WinnerDefined(this.id, winners))
     this.addDomainEvent(new AuctionFinished(this))
   }
 
@@ -206,8 +266,8 @@ export class Auction extends AggregateRoot<AuctionProps> {
       throw new Error('Auction must have at least one lot')
     }
 
-    Auction.validateDates(startAt)
-    Auction.validateDates(endAt)
+    Auction.validateDate(startAt)
+    Auction.validateDate(endAt)
 
     const now = new Date()
 
@@ -229,9 +289,9 @@ export class Auction extends AggregateRoot<AuctionProps> {
     if (this.props.status.value !== 'draft') {
       throw new Error('Auction must be in draft to add lot')
     }
-    const alredyExists = this.props.lots.some((item) => item.id.equals(lot.id))
-    if (alredyExists) {
-      throw new Error('Lot alredy Exists in this auction')
+    const alreadyExists = this.props.lots.some((item) => item.id.equals(lot.id))
+    if (alreadyExists) {
+      throw new Error('Lot already exists in this auction')
     }
 
     this.props.lots.push(lot)
@@ -240,9 +300,10 @@ export class Auction extends AggregateRoot<AuctionProps> {
 
   public finalize(): void {
     if (this.props.status.value !== 'finished') {
-      throw new Error('Auction must be finished to finlize')
+      throw new Error('Auction must be finished to finalize')
     }
 
+    this.props.status = AuctionStatus.finalized()
     this.props.updatedAt = new Date()
   }
 
@@ -264,9 +325,9 @@ export class Auction extends AggregateRoot<AuctionProps> {
     }
   }
 
-  private static validateDates(date: Date): void {
+  private static validateDate(date: Date): void {
     if (date && Number.isNaN(date.getTime())) {
-      throw new Error('Invalid startAt or endAt')
+      throw new Error('Invalid date')
     }
   }
 }

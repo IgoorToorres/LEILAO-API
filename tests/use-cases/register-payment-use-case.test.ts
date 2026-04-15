@@ -10,6 +10,7 @@ import { Payment } from '@/domain/auction/enterprise/entities/payment'
 import { UniqueEntityId } from '@/core/entities/unique-entity-id'
 import { ResourceNotFoundError } from '@/core/errors/errors/resource-not-found-error'
 import { NotAllowedError } from '@/core/errors/errors/not-allowed-error'
+import { DomainError } from '@/core/errors/errors/domain-error'
 import { describe, it, expect, beforeEach } from 'vitest'
 
 let paymentRepository: InMemoryPaymentRepository
@@ -106,7 +107,7 @@ describe('RegisterPaymentUseCase', () => {
     }
   })
 
-  it('should return NotAllowedError if amount is less than or equal to zero', async () => {
+  it('should return DomainError if amount is less than or equal to zero', async () => {
     const auction = makeFinishedAuction()
 
     await auctionRepository.create(auction)
@@ -121,11 +122,11 @@ describe('RegisterPaymentUseCase', () => {
 
     expect(result.isLeft()).toBe(true)
     if (result.isLeft()) {
-      expect(result.value).toBeInstanceOf(NotAllowedError)
+      expect(result.value).toBeInstanceOf(DomainError)
     }
   })
 
-  it('should return NotAllowedError if externalReference is empty', async () => {
+  it('should return DomainError if externalReference is empty', async () => {
     const auction = makeFinishedAuction()
 
     await auctionRepository.create(auction)
@@ -140,11 +141,11 @@ describe('RegisterPaymentUseCase', () => {
 
     expect(result.isLeft()).toBe(true)
     if (result.isLeft()) {
-      expect(result.value).toBeInstanceOf(NotAllowedError)
+      expect(result.value).toBeInstanceOf(DomainError)
     }
   })
 
-  it('should return NotAllowedError if paidAt is invalid', async () => {
+  it('should return DomainError if paidAt is invalid', async () => {
     const auction = makeFinishedAuction()
 
     await auctionRepository.create(auction)
@@ -159,11 +160,11 @@ describe('RegisterPaymentUseCase', () => {
 
     expect(result.isLeft()).toBe(true)
     if (result.isLeft()) {
-      expect(result.value).toBeInstanceOf(NotAllowedError)
+      expect(result.value).toBeInstanceOf(DomainError)
     }
   })
 
-  it('should return NotAllowedError if paidAt is in the future', async () => {
+  it('should return DomainError if paidAt is in the future', async () => {
     const auction = makeFinishedAuction()
     await auctionRepository.create(auction)
 
@@ -177,7 +178,7 @@ describe('RegisterPaymentUseCase', () => {
 
     expect(result.isLeft()).toBe(true)
     if (result.isLeft()) {
-      expect(result.value).toBeInstanceOf(NotAllowedError)
+      expect(result.value).toBeInstanceOf(DomainError)
     }
   })
 
@@ -199,7 +200,7 @@ describe('RegisterPaymentUseCase', () => {
     }
   })
 
-  it('should return NotAllowedError if paid amount does not match expected payment amount', async () => {
+  it('should return DomainError if paid amount does not match expected payment amount', async () => {
     const auction = makeFinishedAuction()
     await auctionRepository.create(auction)
     await paymentRepository.create(makePendingPayment(auction.id, 1500))
@@ -214,7 +215,7 @@ describe('RegisterPaymentUseCase', () => {
 
     expect(result.isLeft()).toBe(true)
     if (result.isLeft()) {
-      expect(result.value).toBeInstanceOf(NotAllowedError)
+      expect(result.value).toBeInstanceOf(DomainError)
     }
   })
 

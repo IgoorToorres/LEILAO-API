@@ -4,12 +4,12 @@ import { UniqueEntityId } from '@/core/entities/unique-entity-id'
 
 export class WinnerDefined implements DomainEvent {
   public occurredAt: Date
-  public winner: Winner
+  public winners: Winner[]
   public auctionId: UniqueEntityId
 
-  constructor(auctionId: UniqueEntityId, winner: Winner) {
+  constructor(auctionId: UniqueEntityId, winners: Winner[]) {
     this.auctionId = auctionId
-    this.winner = winner
+    this.winners = winners
     this.occurredAt = new Date()
   }
 

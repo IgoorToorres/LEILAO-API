@@ -55,4 +55,8 @@ export class User extends Entity<UserProps> {
   get status() {
     return this.props.status.value
   }
+
+  get verificationStatus() {
+    return this.props.verificationStatus.value
+  }
 }
